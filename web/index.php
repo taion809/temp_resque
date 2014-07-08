@@ -19,14 +19,14 @@ $app->register(new Silex\Provider\TwigServiceProvider(), ['twig.path' => __DIR__
 
 Resque::setBackend("localhost:6379");
 
-$app->put('/update/{$job_id}', function(Request $request, $job_id) use ($app) {
+$app->post('/update/{id}', function(Request $request, $id) use ($app) {
     $name = $request->get('name');
     if(! $name) {
         $app->abort('400', 'Invalid parameters, bad payload! :\\');
     }
 
-    $statement = $app['pdo']->prepare("UPDATE jobs SET name = :name, status = 'complete' WHERE job_id = :job_id");
-    $statement->execute(['name' => $name, 'job_id' => $job_id]);
+    $statement = $app['pdo']->prepare("UPDATE jobs SET name = :name, status = 'complete' WHERE id = :id");
+    $statement->execute(['name' => $name, 'id' => $id]);
     
     return new Response("Completed {$job_id}", 200);
 });
@@ -38,10 +38,15 @@ $app->post("/new", function(Request $request) use ($app) {
         $app->abort(400, "Invalid parameters, try again. :(");
     }
 
-    $job = Resque::enqueue('default', 'Greet', ["name" => $name], true);
-
     $statement = $app['pdo']->prepare("INSERT INTO jobs (job_id, name, status) VALUES (?, ?, ?)");
-    $statement->execute([$job, 'not yet processed', 'queued']);
+    $statement->execute(['', 'not yet processed', 'queued']);
+
+    $id = $app['pdo']->lastInsertId();
+
+    $job = Resque::enqueue('default', 'Greet', ["id" =>  $id, "name" => $name], true);
+
+    $statement = $app['pdo']->prepare("UPDATE jobs SET job_id = :job_id WHERE id = :id");
+    $statement->execute(['job_id' => $job, 'id' => $id]);
 
     return $app->redirect("/job/{$job}");
 });
@@ -77,7 +82,7 @@ $app->get("/new", function() use ($app) {
 
 $app->get('/', function() use ($app) {
     // Brevity people!
-    $jobs = $app['pdo']->query('SELECT * FROM jobs')->fetchAll();
+    $jobs = $app['pdo']->query('SELECT * FROM jobs ORDER BY id DESC')->fetchAll();
     return $app['twig']->render('index.twig', ['jobs' => $jobs]);
 });
 
