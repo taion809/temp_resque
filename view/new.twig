@@ -1,0 +1,23 @@
+{% extends 'base.twig' %}
+{% block title %} New Job! {% endblock %}
+{% block content %}
+<br />
+<form class="form-horizontal" action="/new" method="POST">
+  <fieldset>
+    <legend>Make goworker greet someone!</legend>
+    <div class="form-group">
+      <label for="name" class="col-lg-2 control-label">Name</label>
+      <div class="col-lg-10">
+        <input class="form-control" id="name" name="name" placeholder="Your name, my name, any name?" type="text">
+        <span class="help-block">Who should <a href="http://blog.golang.org/gopher">gordon</a> say hello to?</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-lg-10 col-lg-offset-2">
+        <a class="btn btn-default" href='/'>Cancel</a>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </fieldset>
+</form>
+{% endblock %}
